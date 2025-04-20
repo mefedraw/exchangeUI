@@ -1,0 +1,274 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f7f9fc;
+    color: #333;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #f7931a;
+}
+
+.user-balance {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-left: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.balance-label {
+    font-size: 14px;
+    color: #666;
+}
+
+.balance-amount {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.price-display {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.current-price {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2a2a2a;
+}
+
+.price-change {
+    font-size: 18px;
+    color: #28a745;
+    margin-left: 10px;
+}
+
+.negative {
+    color: #dc3545;
+}
+
+.chart-container {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.trading-panel {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.trade-box {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 48%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.trade-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.btn-buy {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-buy:hover {
+    background-color: #218838;
+}
+
+.btn-sell {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-sell:hover {
+    background-color: #c82333;
+}
+
+.time-filters {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.time-filter {
+    margin: 0 5px;
+    padding: 5px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    transition: all 0.3s;
+}
+
+.time-filter.active {
+    background-color: #f7931a;
+    color: white;
+    border-color: #f7931a;
+}
+
+.history-container {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.history-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th, .history-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.history-table th {
+    font-weight: 600;
+    color: #666;
+}
+
+.buy-order {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.sell-order {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.no-orders {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+.point-buy {
+    width: 10px;
+    height: 10px;
+    background-color: #28a745;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.point-sell {
+    width: 10px;
+    height: 10px;
+    background-color: #dc3545;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+/* Стили для формы входа/регистрации */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
+.login-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    width: 350px;
+}
+
+.login-container h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+/* Стили для кнопки закрытия ордера */
+.btn-close-order {
+    background-color: #f7931a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.btn-close-order:hover {
+    background-color: #e67e00;
+}
