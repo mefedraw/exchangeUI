@@ -39,20 +39,24 @@ const depositCancel = document.getElementById('deposit-cancel');
 const depositConfirm = document.getElementById('deposit-confirm');
 
 // Initialize app
-function init() {
+async function init() {
     const savedId = localStorage.getItem('userId');
     const savedEmail = localStorage.getItem('userEmail');
 
     if (savedId && savedEmail) {
         state.userId = savedId;
         state.userEmail = savedEmail;
+
+        // Сначала показываем приложение
         showMainApp();
 
         userEmailDisplay.textContent = state.userEmail;
 
-        // используй async/await здесь
-        fetchBalance(savedId);
-        fetchOrders(savedId);
+        // Потом загружаем данные
+        await fetchBalance(savedId);
+        await fetchOrders(savedId);
+
+        // initChart() уже вызывается в showMainApp()
     } else {
         showAuthScreen();
     }
@@ -85,9 +89,13 @@ function setupEventListeners() {
 
     // Trading
     tickerSelect.addEventListener('change', (e) => {
-        state.ticker = e.target.value; // Не удаляйте слеш!
-        initChart();
-        fetchOrders(state.userId);
+        state.ticker = e.target.value;
+        if (window.updateTradingViewSymbol) {
+            window.updateTradingViewSymbol(state.ticker.replace('/', ''));
+        } else {
+            initChart();
+        }
+        fetchOrders(parseInt(state.userId));
     });
 
 
@@ -135,10 +143,19 @@ function updateAuthTabs() {
 }
 
 function showMainApp() {
+    // Сначала скрываем экран авторизации
     authScreen.style.display = 'none';
-    mainApp.style.display = 'block';
+
+    // Задаем пользовательские данные
     userEmailDisplay.textContent = state.userEmail;
-    initChart();
+
+    // Затем показываем основное приложение
+    mainApp.style.display = 'block';
+
+    // Инициализируем график с большей задержкой
+    setTimeout(() => {
+        initChart();
+    }, 150);
 }
 
 function showAuthScreen() {
@@ -162,6 +179,11 @@ function hideError() {
 }
 
 function updateOrdersTable() {
+    if (!ordersTable) {
+        console.error('Orders table element not found');
+        return;
+    }
+
     if (state.orders.length === 0) {
         ordersTable.innerHTML = `
         <tr>
@@ -181,7 +203,7 @@ function updateOrdersTable() {
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
         order.Type === 'long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
     }">
-                ${order.Type === 'long' ? 'Покупка' : 'Продажа'}
+                ${order.Type === 'long' ? 'long' : 'short'}
             </span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -213,27 +235,76 @@ function updateOrdersTable() {
 
 // Chart Initialization
 function initChart() {
-    if (window.chart) {
-        window.chart.remove();
+    const chartContainer = document.getElementById('chart');
+
+    if (!chartContainer) {
+        console.error('Chart container not found');
+        return;
     }
 
-    const chartContainer = document.getElementById('chart');
+    // Очищаем контейнер
     chartContainer.innerHTML = '';
 
-    window.chart = new TradingView.widget({
-        container_id: 'chart',
-        width: '100%',
-        height: 500,
-        symbol: `BINANCE:${state.ticker.replace('/', '')}`,
-        interval: 'D',
-        timezone: 'Etc/UTC',
-        theme: 'light',
-        style: '1',
-        locale: 'ru',
-        toolbar_bg: '#f1f3f6',
-        studies: ['MASimple@tv-basicstudies']
-    });
+    // Создаём HTML разметку для виджета TradingView
+    chartContainer.innerHTML = `
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div id="tradingview_widget" class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+        </div>
+    `;
+
+    // Создаём скрипт для загрузки виджета
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+
+    // Конфигурация виджета
+    const config = {
+        "autosize": true,
+        "symbol": `BINANCE:${state.ticker.replace('/', '')}`,
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "light",
+        "style": "1",
+        "locale": "ru",
+        "gridColor": "rgba(0, 0, 0, 0.06)",
+        "hide_top_toolbar": false,
+        "hide_legend": true,
+        "allow_symbol_change": false,
+        "save_image": false,
+        "hide_volume": true,
+        "support_host": "https://www.tradingview.com"
+    };
+
+    // Добавляем конфигурацию в скрипт
+    script.text = JSON.stringify(config);
+
+    // Функция для обновления символа при изменении тикера
+    window.updateTradingViewSymbol = function(newSymbol) {
+        // Удаляем старый виджет
+        chartContainer.innerHTML = '';
+
+        // Пересоздаем виджет с новым символом
+        initChart();
+    };
+
+    // Добавляем скрипт на страницу
+    const widgetContainer = document.getElementById('tradingview_widget');
+    if (widgetContainer) {
+        widgetContainer.appendChild(script);
+    }
 }
+
+tickerSelect.addEventListener('change', (e) => {
+    state.ticker = e.target.value;
+    if (window.updateTradingViewSymbol) {
+        window.updateTradingViewSymbol(state.ticker.replace('/', ''));
+    } else {
+        initChart();
+    }
+    fetchOrders(parseInt(state.userId));
+});
 
 // API Functions
 async function handleLogin() {
@@ -259,8 +330,8 @@ async function handleLogin() {
             localStorage.setItem('userEmail', data.email);
             showMainApp();
 
-            await fetchBalance(data.id);   // добавь await
-            await fetchOrders(data.id);    // добавь await
+            await fetchBalance(data.id);
+            await fetchOrders(data.id);
 
         } else {
             showError(data.error || 'Ошибка авторизации');
@@ -295,7 +366,9 @@ async function handleRegister() {
             localStorage.setItem('userId', data.id);
             localStorage.setItem('userEmail', emailInput.value);
             showMainApp();
-            fetchBalance(data.id);
+
+            await fetchBalance(data.id);
+            await fetchOrders(data.id);
         } else {
             showError(data.error || 'Ошибка регистрации');
         }
@@ -317,18 +390,31 @@ function handleLogout() {
 }
 
 async function fetchBalance(id) {
+    if (!id) {
+        console.error('No user ID provided for balance fetch');
+        return;
+    }
+
     try {
         const res = await fetch('http://localhost:8080/user/api/user/balance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
+            body: JSON.stringify({ id: parseInt(id) })
         });
 
+        console.log(res.ok, res.body)
         const data = await res.json();
-        console.log("Balance data:", data); // проверьте данные здесь
+        console.log("Balance data:", data);
 
-        state.balance = parseFloat(data.balance);
-        balanceDisplay.textContent = '$' + state.balance.toFixed(2);
+        if (data && data.balance !== undefined) {
+            state.balance = parseFloat(data.balance);
+
+            if (balanceDisplay) {
+                balanceDisplay.textContent = '$' + state.balance.toFixed(2);
+            }
+        } else {
+            console.error('Invalid balance data received');
+        }
     } catch (err) {
         console.error('Error fetching balance:', err);
     }
@@ -336,6 +422,11 @@ async function fetchBalance(id) {
 
 
 async function fetchOrders(id) {
+    if (!id) {
+        console.error('No user ID provided for orders fetch');
+        return;
+    }
+
     try {
         const res = await fetch('http://localhost:8080/trade/api/trade/orders', {
             method: 'POST',
@@ -345,8 +436,13 @@ async function fetchOrders(id) {
 
         const { orders } = await res.json();
         console.log('Orders from server:', orders);
-        state.orders = orders;
-        updateOrdersTable();
+
+        if (Array.isArray(orders)) {
+            state.orders = orders;
+            updateOrdersTable();
+        } else {
+            console.error('Invalid orders data received');
+        }
     } catch (err) {
         console.error('Error fetching orders:', err);
     }
@@ -366,7 +462,7 @@ async function openOrder(type) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                user_id: +state.userId,
+                user_id: parseInt(state.userId),
                 ticker: state.ticker,
                 order_type: type,
                 margin: parseFloat(state.amount),
@@ -377,8 +473,8 @@ async function openOrder(type) {
         amountInput.value = '';
         state.amount = '';
         updatePositionSize();
-        await fetchBalance(state.userId);
-        await fetchOrders(state.userId);
+        await fetchBalance(parseInt(state.userId));
+        await fetchOrders(parseInt(state.userId));
     } catch (err) {
         console.error('Error opening order:', err);
     } finally {
@@ -400,8 +496,9 @@ async function closeOrder(orderId) {
             })
         });
 
-        fetchBalance(state.userId);
-        fetchOrders(state.userId);
+        await fetchBalance(parseInt(state.userId));
+        await fetchBalance(parseInt(state.userId));
+        await fetchOrders(parseInt(state.userId));
     } catch (err) {
         console.error('Error closing order:', err);
     } finally {
@@ -422,14 +519,14 @@ async function handleDeposit() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id: +state.userId,
+                id: parseInt(state.userId),
                 amount: parseFloat(amount)
             })
         });
 
         depositAmount.value = '';
         depositModal.classList.add('hidden');
-        fetchBalance(state.userId);
+        await fetchBalance(parseInt(state.userId));
     } catch (err) {
         console.error('Error depositing funds:', err);
     } finally {
@@ -441,4 +538,6 @@ async function handleDeposit() {
 window.closeOrder = closeOrder;
 
 // Initialize the app
-init();
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+});
