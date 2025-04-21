@@ -1,13 +1,13 @@
-// App State
+```// App State
 const state = {
     userId: null,
     userEmail: null,
     balance: 0,
     orders: [],
-    ticker: 'BTC/USDT',
+    ticker: 'BTCUSDT',
     amount: '',
     leverage: 1,
-    chart: 'BTC/USDT',
+    chart: 'BTCUSDT',
     isRegistering: false,
     loading: false
 };
@@ -47,10 +47,6 @@ function init() {
         state.userId = savedId;
         state.userEmail = savedEmail;
         showMainApp();
-
-        userEmailDisplay.textContent = state.userEmail;
-
-        // используй async/await здесь
         fetchBalance(savedId);
         fetchOrders(savedId);
     } else {
@@ -59,7 +55,6 @@ function init() {
 
     setupEventListeners();
 }
-
 
 // Event Listeners
 function setupEventListeners() {
@@ -85,11 +80,10 @@ function setupEventListeners() {
 
     // Trading
     tickerSelect.addEventListener('change', (e) => {
-        state.ticker = e.target.value; // Не удаляйте слеш!
+        state.ticker = e.target.value;
         initChart();
         fetchOrders(state.userId);
     });
-
 
     amountInput.addEventListener('input', (e) => {
         state.amount = e.target.value;
@@ -101,8 +95,8 @@ function setupEventListeners() {
         updatePositionSize();
     });
 
-    buyBtn.addEventListener('click', () => openOrder('long'));
-    sellBtn.addEventListener('click', () => openOrder('short'));
+    buyBtn.addEventListener('click', () => openOrder('buy'));
+    sellBtn.addEventListener('click', () => openOrder('sell'));
 
     // Deposit
     depositBtn.addEventListener('click', () => {
@@ -164,52 +158,53 @@ function hideError() {
 function updateOrdersTable() {
     if (state.orders.length === 0) {
         ordersTable.innerHTML = `
-        <tr>
-            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                Нет открытых сделок по выбранной паре
-            </td>
-        </tr>`;
+      <tr>
+        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+          Нет открытых сделок по выбранной паре
+        </td>
+      </tr>
+    `;
         return;
     }
 
     ordersTable.innerHTML = state.orders.map(order => `
     <tr class="hover:bg-gray-50">
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-            ${new Date(order.CreatedAt).toLocaleString('ru-RU')}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        order.Type === 'long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+        ${new Date(order.created_at).toLocaleString('ru-RU')}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        order.order_type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
     }">
-                ${order.Type === 'long' ? 'Покупка' : 'Продажа'}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            $${parseFloat(order.Margin).toFixed(2)}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-            ${order.Leverage}x
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        order.Status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+          ${order.order_type === 'buy' ? 'Покупка' : 'Продажа'}
+        </span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+        $${parseFloat(order.margin).toFixed(2)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+        ${order.leverage}x
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        order.status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
     }">
-                ${order.Status === 'open' ? 'Активен' : 'Закрыт'}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            ${order.Status === 'open' ? `
-                <button
-                    onclick="closeOrder('${order.Id}')"
-                    class="text-orange-600 hover:text-orange-800 transition"
-                >
-                    Закрыть
-                </button>` : ''}
-        </td>
+          ${order.status === 'open' ? 'Активен' : 'Закрыт'}
+        </span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        ${order.status === 'open' ? `
+          <button
+            onclick="closeOrder('${order.order_id}')"
+            class="text-orange-600 hover:text-orange-800 transition"
+          >
+            Закрыть
+          </button>
+        ` : ''}
+      </td>
     </tr>
-    `).join('');
+  `).join('');
 }
-
 
 // Chart Initialization
 function initChart() {
@@ -224,13 +219,14 @@ function initChart() {
         container_id: 'chart',
         width: '100%',
         height: 500,
-        symbol: `BINANCE:${state.ticker.replace('/', '')}`,
+        symbol: `BINANCE:${state.ticker}`,
         interval: 'D',
         timezone: 'Etc/UTC',
         theme: 'light',
         style: '1',
         locale: 'ru',
         toolbar_bg: '#f1f3f6',
+        allow_symbol_change: true,
         studies: ['MASimple@tv-basicstudies']
     });
 }
@@ -258,10 +254,8 @@ async function handleLogin() {
             localStorage.setItem('userId', data.id);
             localStorage.setItem('userEmail', data.email);
             showMainApp();
-
-            await fetchBalance(data.id);   // добавь await
-            await fetchOrders(data.id);    // добавь await
-
+            fetchBalance(data.id);
+            fetchOrders(data.id);
         } else {
             showError(data.error || 'Ошибка авторизации');
         }
@@ -272,12 +266,12 @@ async function handleLogin() {
     }
 }
 
-
 async function handleRegister() {
     state.loading = true;
     hideError();
 
     try {
+        console.log("http://localhost:8080/user/api/user/register")
         const res = await fetch('http://localhost:8080/user/api/user/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -318,22 +312,20 @@ function handleLogout() {
 
 async function fetchBalance(id) {
     try {
+        console.log("http://localhost:8080/user/api/user/balance")
         const res = await fetch('http://localhost:8080/user/api/user/balance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
+            body: JSON.stringify({ user_id: +id })
         });
 
         const data = await res.json();
-        console.log("Balance data:", data); // проверьте данные здесь
-
         state.balance = parseFloat(data.balance);
         balanceDisplay.textContent = '$' + state.balance.toFixed(2);
     } catch (err) {
         console.error('Error fetching balance:', err);
     }
 }
-
 
 async function fetchOrders(id) {
     try {
@@ -344,8 +336,7 @@ async function fetchOrders(id) {
         });
 
         const { orders } = await res.json();
-        console.log('Orders from server:', orders);
-        state.orders = orders;
+        state.orders = orders.filter(o => o.ticker === state.ticker);
         updateOrdersTable();
     } catch (err) {
         console.error('Error fetching orders:', err);
@@ -359,8 +350,6 @@ async function openOrder(type) {
     }
 
     state.loading = true;
-    buyBtn.disabled = sellBtn.disabled = true; // блокируем кнопки сразу при нажатии
-
     try {
         await fetch('http://localhost:8080/trade/api/trade/open', {
             method: 'POST',
@@ -377,16 +366,14 @@ async function openOrder(type) {
         amountInput.value = '';
         state.amount = '';
         updatePositionSize();
-        await fetchBalance(state.userId);
-        await fetchOrders(state.userId);
+        fetchBalance(state.userId);
+        fetchOrders(state.userId);
     } catch (err) {
         console.error('Error opening order:', err);
     } finally {
         state.loading = false;
-        buyBtn.disabled = sellBtn.disabled = false; // ← обязательно разблокируем кнопки
     }
 }
-
 
 async function closeOrder(orderId) {
     state.loading = true;
