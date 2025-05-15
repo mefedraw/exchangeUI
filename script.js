@@ -187,50 +187,41 @@ function updateOrdersTable() {
     if (state.orders.length === 0) {
         ordersTable.innerHTML = `
         <tr>
-            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                 Нет открытых сделок по выбранной паре
             </td>
         </tr>`;
         return;
     }
 
-    ordersTable.innerHTML = state.orders.map(order => `
-    <tr class="hover:bg-gray-50">
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-            ${new Date(order.CreatedAt).toLocaleString('ru-RU')}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        order.Type === 'long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-    }">
-                ${order.Type === 'long' ? 'long' : 'short'}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            $${parseFloat(order.Margin).toFixed(2)}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-            ${order.Leverage}x
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        order.Status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-    }">
-                ${order.Status === 'open' ? 'Активен' : 'Закрыт'}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            ${order.Status === 'open' ? `
-                <button
-                    onclick="closeOrder('${order.Id}')"
-                    class="text-orange-600 hover:text-orange-800 transition"
-                >
-                    Закрыть
-                </button>` : ''}
-        </td>
-    </tr>
-    `).join('');
+    ordersTable.innerHTML = state.orders.map(order => {
+        const date = new Date(order.CreatedAt).toLocaleString('ru-RU');
+        const typeLabel = order.Type === 'long'
+            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">long</span>`
+            : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">short</span>`;
+        const margin = `$${parseFloat(order.Margin).toFixed(2)}`;
+        const leverage = `${order.Leverage}x`;
+        const entryPrice = `$${parseFloat(order.EntryPrice).toFixed(2)}`;
+        const statusLabel = order.Status === 'open'
+            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Активен</span>`
+            : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Закрыт</span>`;
+        const actionBtn = order.Status === 'open'
+            ? `<button onclick="closeOrder('${order.Id}')" class="text-orange-600 hover:text-orange-800 transition">Закрыть</button>`
+            : '';
+
+        return `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${date}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${typeLabel}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${margin}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${leverage}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${entryPrice}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${statusLabel}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">${actionBtn}</td>
+        </tr>`;
+    }).join('');
 }
+
 
 
 // Chart Initialization
@@ -436,11 +427,12 @@ async function fetchOrders(id) {
 
         const { orders } = await res.json();
         console.log('Orders from server:', orders);
-
         if (Array.isArray(orders)) {
-            state.orders = orders;
+            // оставляем только открытые
+            state.orders = orders.filter(o => o.Status === 'open');
             updateOrdersTable();
-        } else {
+        }
+ else {
             console.error('Invalid orders data received');
         }
     } catch (err) {
