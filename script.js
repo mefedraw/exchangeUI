@@ -202,6 +202,9 @@ function updateOrdersTable() {
         const margin = `$${parseFloat(order.Margin).toFixed(2)}`;
         const leverage = `${order.Leverage}x`;
         const entryPrice = `$${parseFloat(order.EntryPrice).toFixed(2)}`;
+        const ticker = `${order.Ticker}`;
+        const orderIdGuid = order.Id; // "123e4567-e89b-12d3-a456-426614174000"
+        const orderId = orderIdGuid.split('-')[0]; // "123e4567"
         const statusLabel = order.Status === 'open'
             ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Активен</span>`
             : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Закрыт</span>`;
@@ -212,6 +215,8 @@ function updateOrdersTable() {
         return `
         <tr class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${date}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${orderId}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${ticker}</td>
             <td class="px-6 py-4 whitespace-nowrap">${typeLabel}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${margin}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${leverage}</td>
