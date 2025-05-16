@@ -437,7 +437,7 @@ async function fetchOrders(id) {
             state.orders = orders.filter(o => o.Status === 'open');
             updateOrdersTable();
         }
- else {
+        else {
             console.error('Invalid orders data received');
         }
     } catch (err) {
